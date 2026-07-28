@@ -54,10 +54,8 @@ const handleSubmit = (e) => {
     return;
   }
 
-  // 1. Create login DTO
   const loginDTO = createLogStruct(username, password);
 
-  // 2. Subscribe to server response
   const unsubscribe = subscribeMessages((payload) => {
     let msg;
 
@@ -116,31 +114,17 @@ const handleSubmit = (e) => {
     }
   });
 
-  // 3. Send login request (no JWT — user is not authenticated yet)
   sendMessage(JSON.stringify(loginDTO), { attachToken: false });
 };
+
   return (
     <div className="login-page">
       <div className="login-left">
         <div className="auth-hero">
           <div className="auth-logo-wrap">
-            <svg viewBox="0 0 48 48" className="auth-logo-icon" aria-hidden="true">
-              <defs>
-                <linearGradient id="authLogoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#8b5cf6" />
-                </linearGradient>
-              </defs>
-              <path
-                fill="url(#authLogoGrad1)"
-                d="M24 4C13.5 4 5 12.5 5 23c0 4.2 1.4 8.1 3.7 11.2L4 44l10.2-4.4C17.8 41 20.8 42 24 42c10.5 0 19-8.5 19-19S34.5 4 24 4z"
-              />
-              <circle cx="18" cy="23" r="2.5" fill="white" opacity="0.9" />
-              <circle cx="24" cy="23" r="2.5" fill="white" opacity="0.9" />
-              <circle cx="30" cy="23" r="2.5" fill="white" opacity="0.9" />
-            </svg>
+            <img src="/favicon.png" alt="" className="auth-logo-icon" aria-hidden="true" />
           </div>
-          <h1 className="auth-brand">Echo</h1>
+          <h1 className="auth-brand">ChatMe</h1>
           <p className="auth-tagline">Sign in to continue</p>
         </div>
       </div>
@@ -152,11 +136,11 @@ const handleSubmit = (e) => {
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="login-field">
               <label className="login-label" htmlFor="username">Username</label>
-              <input className="login-input" id="username" name="username" placeholder="Enter your username" />
+              <input className="login-input" id="username" name="username" placeholder="Enter your username" autoComplete="username" />
             </div>
             <div className="login-field">
               <label className="login-label" htmlFor="password">Password</label>
-              <input className="login-input" id="password" name="password" type="password" placeholder="••••••••" />
+              <input className="login-input" id="password" name="password" type="password" placeholder="••••••••" autoComplete="current-password" />
             </div>
             <div className="login-row">
               <label className="login-check">
@@ -165,7 +149,7 @@ const handleSubmit = (e) => {
               </label>
               <a href="#" className="login-link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
             </div>
-           <button type="submit" className="login-btn" >Sign in</button>
+            <button type="submit" className="login-btn">Sign in</button>
             {connectionError && (
               <p className="login-error" role="alert">
                 Connection problem. Check your network and try again.

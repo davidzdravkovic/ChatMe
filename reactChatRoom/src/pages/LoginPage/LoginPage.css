@@ -236,6 +236,13 @@
   transform: scale(0.99);
 }
 
+.login-error {
+  margin: 0;
+  font-size: 13px;
+  color: #f85149;
+  line-height: 1.4;
+}
+
 .login-switch {
   margin: 24px 0 0;
   padding-top: 24px;

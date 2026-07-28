@@ -185,6 +185,22 @@
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
+.signup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.signup-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .signup-btn {
   margin-top: 4px;
   padding: 10px 16px;

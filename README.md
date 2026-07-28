@@ -1,10 +1,20 @@
-# ConnectRoom (ChatRoom)
+<p align="center">
+  <img src="reactChatRoom/public/favicon.png" alt="ChatMe logo" width="96" />
+</p>
 
-Messaging platform for **1:1 messaging between peers**. 
+# ChatMe
+
+Messaging platform for **1:1 messaging between peers**.
 
 **Live demo:** [https://connectroom.duckdns.org](https://connectroom.duckdns.org)
 
-> Add screenshots or a short GIF here after you capture them (login + open chat + send message).
+## Screenshots
+
+| Login | Chat |
+|-------|------|
+| _Add login screenshot_ | _Add chat screenshot_ |
+
+_Add a conversation screenshot after you capture it (login + chat list + active chat)._
 
 ---
 
