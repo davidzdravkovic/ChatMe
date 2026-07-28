@@ -13,8 +13,8 @@ Messaging platform for **1:1 messaging between peers**.
 The main purpose of this project was to build a **real product for real users**.
 
 The second goal was to develop a deeper understanding of server-side networking by building a **custom C++ WebSocket backend** (Boost.Asio / Boost.Beast) without relying on a high-level framework. That let me own the network layer: connections, message flow, and how a server handles concurrent real-time traffic.
- 
- ---
+
+---
 
 ## Features
 
@@ -55,7 +55,7 @@ The second goal was to develop a deeper understanding of server-side networking 
 
 ---
 
-## Architecture (one look)
+## Architecture (overview)
 
 ```text
 Browser / Capacitor
@@ -69,14 +69,11 @@ Browser / Capacitor
                  PostgreSQL
 ```
 
-Deeper map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Deploy overview: [`docs/DEPLOYMENT_OVERVIEW.md`](docs/DEPLOYMENT_OVERVIEW.md)
-
-**Repos layout**
+**Project structure**
 
 - `chat_room_server/` — C++ WebSocket server  
 - `reactChatRoom/` — React + Capacitor client  
 - `media_storage/` — media HTTP service  
-- `docs/` — architecture, deploy notes, portfolio notes  
 
 ---
 
@@ -84,7 +81,7 @@ Deeper map: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Deploy overview: [
 
 Client and server talk **JSON over one WebSocket**. Typical flow:
 
-1. Connect → server sends `SESSION_INIT` with `sessionId`
+1. Connect → server sends `SESSION_INIT` with `sessionId` 
 2. `LOGIN_REQUEST` / `CREATE_REQUEST` (no token) → JWT on success  
 3. Later messages include session id + JWT  
 4. Live traffic examples: `MESSAGE_REQUEST`, `FETCH_MESSAGES_REQUEST`, `TYPING_REQUEST`, `SEEN_REQUEST`, `REACTION_REQUEST`, media upload/finalize requests  
@@ -107,7 +104,7 @@ Exact dependency versions and OS paths vary. Use this as the map; adjust for you
 ### Database
 
 1. Create a database/user.  
-2. Apply schema from `chat_room_server/prod-schema.sql` or `local-schema.sql`.  
+2. Apply the PostgreSQL schema (migration tooling / committed schema dump planned — not in this repo yet).  
 3. Point server config / env at that database (`chat_room_server/Config/`, env example in `chat_room_server/deploy/chat-server.env.example`).
 
 ### Server
@@ -150,49 +147,6 @@ npm run cap:sync
 npm run cap:open
 ```
 
-### Tests (client)
-
-```bash
-cd reactChatRoom
-npm run test:run
-```
-
-Server automated tests are a planned improvement (see below).
-
----
-
-## Production deploy (summary)
-
-- **nginx** terminates TLS, serves the SPA, proxies `/ws` and `/media/`  
-- **systemd** runs the chat server (`chat_room_server/deploy/chat-server.service`)  
-- Secrets via EnvironmentFile (`JWT_SECRET`, DB credentials)  
-- Details: [`docs/DEPLOYMENT_OVERVIEW.md`](docs/DEPLOYMENT_OVERVIEW.md), `reactChatRoom/deploy/HTTPS-SETUP.txt`
-
----
-
-## What I’d improve next
-
-Honest gaps (engineering maturity, not excuses):
-
-1. Broader **automated tests** on the C++ server + CI  
-2. Harden **JWT defaults** (always-on verification in prod builds; honor configured TTL)  
-3. Remove leftover **debug logging** on hot paths  
-4. **Schema/migration** discipline so dumps always match the live DB  
-5. Optional: **TypeScript** on the client for common junior web job filters  
-
----
-
-## Interview / discussion hooks
-
-Worth being ready to explain:
-
-- WebSocket session lifecycle and reconnect re-bind  
-- Why identity is bound from JWT (`bindTrustedUser`) not client-supplied sender ids  
-- Ordered-message handling under concurrent reads  
-- Conversation “epoch” / stale-fetch guards on the client  
-- Multi-phase image upload (WS + HTTP media)
-
----
 
 ## License
 
