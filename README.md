@@ -1,12 +1,18 @@
 <p align="center">
-  <img src="reactChatRoom/public/favicon.png" alt="ChatMe logo" width="96" />
+  <img src="reactChatRoom/public/favicon.png" alt="ChatMe logo" width="120" />
 </p>
 
-# ChatMe
+<h1 align="center">ChatMe</h1>
 
-Messaging platform for **1:1 messaging between peers**.
+<p align="center">
+  Messaging platform for <strong>1-to-1 private chat</strong>
+</p>
 
-**Live demo:** [https://connectroom.duckdns.org](https://connectroom.duckdns.org)
+<p align="center">
+  <a href="https://connectroom.duckdns.org"><strong>Live demo → connectroom.duckdns.org</strong></a>
+</p>
+
+---
 
 ## Screenshots
 
@@ -14,7 +20,7 @@ Messaging platform for **1:1 messaging between peers**.
 |-------|------|
 | _Add login screenshot_ | _Add chat screenshot_ |
 
-_Add a conversation screenshot after you capture it (login + chat list + active chat)._
+<sub>Add a conversation screenshot when ready (login · chat list · active chat).</sub>
 
 ---
 
