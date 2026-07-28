@@ -1,0 +1,24 @@
+# Example systemd unit — adjust paths for your VPS layout.
+#
+#   sudo cp deploy/chat-server.service /etc/systemd/system/
+#   sudo cp deploy/chat-server.env.example /root/chat_room_server/Config/chat_server.env
+#   # edit chat_server.env: set JWT_SECRET
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now chat-server
+#
+# Load order: Jwt.json still read from Config/; JWT_SECRET can come from this file only.
+
+[Unit]
+Description=Chat room WebSocket server
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/root/chat_room_server
+EnvironmentFile=-/root/chat_room_server/Config/chat_server.env
+ExecStart=/root/chat_room_server/build/chat_server
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

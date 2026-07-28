@@ -1,0 +1,21 @@
+# Install on VPS (adjust paths if your tree is not under /root/media_storage):
+#   sudo mkdir -p /var/lib/chat-media/{temp,ProfilePictures,messages}
+#   sudo chown -R root:root /var/lib/chat-media
+#   sudo cp deploy/media-server.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now media-server
+
+[Unit]
+Description=Chat media HTTP server (cpp-httplib)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/media_storage
+EnvironmentFile=-/root/media_storage/deploy/media-server.env
+ExecStart=/root/media_storage/build/media_server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

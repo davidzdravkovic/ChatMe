@@ -1,0 +1,228 @@
+/* Mirrors ChatPage: sidebar 320px | divider | main; mobile: single column. */
+
+.chat-connect-skeleton {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  display: block;
+  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+@media (min-width: 901px) {
+  .chat-connect-skeleton {
+    display: grid;
+    grid-template-columns: 320px 1px 1fr;
+    grid-template-rows: 1fr;
+  }
+}
+
+.chat-connect-skeleton__sidebar {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  max-height: 38vh;
+}
+
+@media (min-width: 901px) {
+  .chat-connect-skeleton__sidebar {
+    border-bottom: none;
+    max-height: none;
+    height: 100%;
+  }
+}
+
+.chat-connect-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.chat-connect-skeleton__row--search {
+  margin-bottom: var(--space-3);
+}
+
+.chat-connect-skeleton__row--list {
+  padding: var(--space-2) 0;
+}
+
+.chat-connect-skeleton__row--header {
+  min-width: 0;
+  flex: 1;
+  gap: var(--space-3);
+}
+
+.chat-connect-skeleton__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.chat-connect-skeleton__divider {
+  display: none;
+  background: var(--border);
+}
+
+@media (min-width: 901px) {
+  .chat-connect-skeleton__divider {
+    display: block;
+  }
+}
+
+.chat-connect-skeleton__main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 62vh;
+}
+
+@media (min-width: 901px) {
+  .chat-connect-skeleton__main {
+    max-height: none;
+  }
+}
+
+.chat-connect-skeleton__header {
+  min-height: 72px;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.chat-connect-skeleton__messages {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.chat-connect-skeleton__bubble {
+  max-width: 78%;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  animation: chat-connect-skeleton-pulse 1.35s var(--ease-in-out) infinite;
+}
+
+.chat-connect-skeleton__bubble--out {
+  align-self: flex-end;
+  width: 64%;
+  background: var(--surface-2);
+}
+
+.chat-connect-skeleton__bubble--in {
+  width: 70%;
+}
+
+.chat-connect-skeleton__bubble--short {
+  width: 44%;
+  height: 40px;
+}
+
+.chat-connect-skeleton__input {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.chat-connect-skeleton__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-connect-skeleton__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  animation: chat-connect-skeleton-pulse 1.35s var(--ease-in-out) infinite 0.15s;
+}
+
+.chat-connect-skeleton__block {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  animation: chat-connect-skeleton-pulse 1.35s var(--ease-in-out) infinite;
+}
+
+.chat-connect-skeleton__block--search {
+  width: 100%;
+  height: 40px;
+}
+
+.chat-connect-skeleton__block--line-lg {
+  width: 72%;
+  height: 12px;
+}
+
+.chat-connect-skeleton__block--line-sm {
+  width: 48%;
+  height: 10px;
+  opacity: 0.9;
+  animation-delay: 0.08s;
+}
+
+.chat-connect-skeleton__block--line-xs {
+  width: 36%;
+  height: 9px;
+  animation-delay: 0.1s;
+}
+
+.chat-connect-skeleton__block--icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  animation-delay: 0.12s;
+}
+
+.chat-connect-skeleton__block--input {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius);
+}
+
+@keyframes chat-connect-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-connect-skeleton__block,
+  .chat-connect-skeleton__avatar,
+  .chat-connect-skeleton__bubble {
+    animation: none;
+    opacity: 0.65;
+  }
+}

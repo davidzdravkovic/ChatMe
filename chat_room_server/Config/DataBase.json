@@ -1,0 +1,10 @@
+{
+  "database": {
+    "type": "postgresql",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "name": "chatroom_db",
+    "user": "db_user",
+    "password": "db_password"
+}
+}

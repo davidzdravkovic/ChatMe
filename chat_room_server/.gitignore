@@ -1,0 +1,31 @@
+# build folders (ALL)
+build/
+build-*/
+build*
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+
+# binaries
+*.exe
+*.obj
+*.o
+*.a
+*.dll
+*.pdb
+
+# editor / tooling
+.vscode/
+.cursor/
+
+# VPS / local secrets (see deploy/chat-server.env.example)
+Config/chat_server.env
+
+# vcpkg local install (large; reproducible from vcpkg.json + manifest)
+vcpkg_installed/
+
+# deploy/sync artifacts (generated, machine-local)
+*.sha256
+local-schema.sql
+prod-schema.sql

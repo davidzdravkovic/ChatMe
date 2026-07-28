@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+build-*/
+build*/
+dist/
+.vite/
+
+# C++ / CMake
+CMakeCache.txt
+CMakeFiles/
+*.exe
+*.obj
+*.o
+*.a
+*.dll
+*.pdb
+vcpkg_installed/
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+!.env.*.example
+Config/chat_server.env
+**/chat-server.env
+**/media-server.env
+
+# Editor / OS
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+*.local
+
+# Generated / local deploy artifacts
+*.sha256
+local-schema.sql
+prod-schema.sql
+/assets/
+
+# Local docs (not for public GitHub — add public docs later when ready)
+docs/
+reactChatRoom/Evolve docs/
+reactChatRoom/useReducerChanges.txt
+
+# Old nested-repo metadata (do not publish)
+**/.git.backup-server/
+**/.git.backup-client/
+
+# Editor AI / local tooling
+**/.continue/
