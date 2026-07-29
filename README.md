@@ -12,14 +12,12 @@
   <a href="https://connectroom.duckdns.org"><strong>Live demo → connectroom.duckdns.org</strong></a>
 </p>
 
----
-
 ## Screenshot
 
 <p align="center">
   <img
     src="readme-screenshots/Chat_screenshot.png"
-    alt="ChatMe — chat list, conversation, typing indicator, and image messages"
+    alt="ChatMe chat interface"
     width="900"
   />
 </p>
