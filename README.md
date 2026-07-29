@@ -14,13 +14,15 @@
 
 ---
 
-## Screenshots
+## Screenshot
 
-| Login | Chat |
-|-------|------|
-| _Add login screenshot_ | _Add chat screenshot_ |
-
-<sub>Add a conversation screenshot when ready (login · chat list · active chat).</sub>
+<p align="center">
+  <img
+    src="readme-screenshots/Chat_screenshot.png"
+    alt="ChatMe — chat list, conversation, typing indicator, and image messages"
+    width="900"
+  />
+</p>
 
 ---
 
