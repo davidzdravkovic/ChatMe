@@ -48,6 +48,8 @@ if(WIN32)
       list(APPEND CMAKE_PREFIX_PATH "${_CHAT_LEGACY_BOOST}")
     endif()
   elseif(CHAT_BOOST_ROOT)
+
+  
     set(Boost_ROOT "${CHAT_BOOST_ROOT}" CACHE PATH "Boost install prefix" FORCE)
     list(APPEND CMAKE_PREFIX_PATH "${CHAT_BOOST_ROOT}")
   elseif(DEFINED ENV{BOOST_ROOT})

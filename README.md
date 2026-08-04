@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://connectroom.duckdns.org"><strong>Live demo → connectroom.duckdns.org</strong></a>
+  <a href="https://connectroom.duckdns.org"><strong>Live app → connectroom.duckdns.org</strong></a>
 </p>
 
 ## Screenshot
