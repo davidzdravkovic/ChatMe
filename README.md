@@ -155,7 +155,9 @@ Exact dependency versions and OS paths vary. Use this as the map; adjust for you
 ### API server
 
 ```bash 
-# During CMake configuration: # - Linux/BSD: jwt-cpp is fetched automatically when JWT support is enabled. # - All platforms: nlohmann/json is downloaded into third_party/.
+# During CMake configuration: 
+# - Linux/BSD: jwt-cpp is fetched automatically when JWT support is enabled.
+# - All platforms: nlohmann/json is downloaded into third_party/.
 cd chat_room_server
 cmake -S . -B build
 cmake --build build
