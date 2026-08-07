@@ -28,6 +28,9 @@ Config/chat_server.env
 **/chat-server.env
 **/media-server.env
 
+# Roadmap refactor notes
+Goals.md
+
 # Editor / OS
 .cursor/
 .vscode/

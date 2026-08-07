@@ -3,25 +3,11 @@
   "configurePresets": [
     {
       "name": "msys2-mingw64",
-      "displayName": "MSYS2 MinGW64 (GCC 15)",
+      "displayName": "MSYS2 MinGW64 + vcpkg JWT",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/x86_64-w64-mingw32-g++.exe"
-      }
-    },
-    {
-      "name": "msys2-mingw64-vcpkg",
-      "displayName": "MSYS2 MinGW64 + vcpkg (OpenSSL + jwt-cpp for JWT)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-vcpkg",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/x86_64-w64-mingw32-g++.exe",
-        "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/ninja.exe",
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
         "CHAT_ENABLE_JWT": "ON"
@@ -32,10 +18,6 @@
     {
       "name": "msys2-mingw64",
       "configurePreset": "msys2-mingw64"
-    },
-    {
-      "name": "msys2-mingw64-vcpkg",
-      "configurePreset": "msys2-mingw64-vcpkg"
     }
   ]
 }

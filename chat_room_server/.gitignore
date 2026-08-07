@@ -9,6 +9,7 @@ deploy/
 # CMake
 CMakeCache.txt
 CMakeFiles/
+CMakeUserPresets.json
 
 # binaries
 *.exe
@@ -21,6 +22,9 @@ CMakeFiles/
 # editor / tooling
 .vscode/
 .cursor/
+
+# Local learning-scope graph (not part of the chat server product)
+ScopeController/
 
 # VPS / local secrets (see deploy/chat-server.env.example)
 Config/chat_server.env

@@ -1,182 +1,40 @@
 cmake_minimum_required(VERSION 3.20)
 project(chat_server)
 
-# JWT (OpenSSL + jwt-cpp): OFF by default so existing MSYS2-only configures keep working.
-# Linux: sudo apt install -y libssl-dev libjwt-cpp-dev  (or only libssl-dev — CMake can FetchContent jwt-cpp).
-# Windows: -DCHAT_ENABLE_JWT=ON with vcpkg / CMake prefix where jwt-cpp is installed.
 option(CHAT_ENABLE_JWT "Link OpenSSL + jwt-cpp for real HS256 JWT" OFF)
 option(CHAT_ENABLE_PASSWORD_HASH "Hash passwords with libsodium (Argon2id)" ON)
-# OFF = old CMake style: find_package(Boost) headers only, link pqxx only (no Boost::system/thread).
-# Asio/Beast normally still need libboost_system at link time — expect link errors unless you use b2/MSYS2 libs.
-option(CHAT_LINK_BOOST_LIBRARIES "Link Boost system+thread (ON recommended for this codebase)" ON)
 
+# Compiler needs to use C++17 not silently fail on older version, standard version no extensions
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# ---- Platform-specific paths ----
-# Linux/VPS: no hardcoded roots — apt packages satisfy find_package(Boost), PostgreSQL, etc.
-# Windows (MSYS2 MinGW): install deps in one prefix, e.g.
-#   pacman -S mingw-w64-x86_64-boost mingw-w64-x86_64-postgresql mingw-w64-x86_64-libpqxx
-# Optional: cmake -DCHAT_BOOST_ROOT=C:/path/to/boost/prefix if you use a custom Boost build.
-# Windows: BOOST_ROOT env + optional -DCHAT_BOOST_ROOT. Supports:
-#   - install layout: <prefix>/include/boost/version.hpp
-#   - source tarball layout: <prefix>/boost/version.hpp (same as your old working CMake)
-set(CHAT_BOOST_ROOT "" CACHE PATH "Windows only: Boost prefix (include/ or boost/ at root). Empty = use env / legacy path / MSYS2.")
-
-if(WIN32)
-  set(_CHAT_LEGACY_BOOST "C:/Users/User/librariesboost/boost_1_89_0")
-  set(_CHAT_MSYS2_MINGW64 "C:/msys64/mingw64")
-  if(EXISTS "${_CHAT_MSYS2_MINGW64}")
-    list(APPEND CMAKE_PREFIX_PATH "${_CHAT_MSYS2_MINGW64}")
-  endif()
-
-  # ---- Headers-only mode (matches your old CMake; no pacman / no b2 required for *configure*) ----
-  if(NOT CHAT_LINK_BOOST_LIBRARIES)
-    if(CHAT_BOOST_ROOT)
-      set(Boost_ROOT "${CHAT_BOOST_ROOT}" CACHE PATH "Boost (CHAT_BOOST_ROOT)" FORCE)
-      list(APPEND CMAKE_PREFIX_PATH "${CHAT_BOOST_ROOT}")
-    elseif(DEFINED ENV{BOOST_ROOT})
-      cmake_path(SET _CHAT_ENV_BOOST "$ENV{BOOST_ROOT}")
-      cmake_path(NORMAL_PATH _CHAT_ENV_BOOST)
-      if(EXISTS "${_CHAT_ENV_BOOST}/include/boost/version.hpp" OR EXISTS "${_CHAT_ENV_BOOST}/boost/version.hpp")
-        set(Boost_ROOT "${_CHAT_ENV_BOOST}" CACHE PATH "Boost (BOOST_ROOT env)" FORCE)
-        list(APPEND CMAKE_PREFIX_PATH "${_CHAT_ENV_BOOST}")
-      endif()
-    elseif(EXISTS "${_CHAT_LEGACY_BOOST}/boost/version.hpp")
-      set(Boost_ROOT "${_CHAT_LEGACY_BOOST}" CACHE PATH "Boost (legacy tarball headers)" FORCE)
-      list(APPEND CMAKE_PREFIX_PATH "${_CHAT_LEGACY_BOOST}")
-    endif()
-  elseif(CHAT_BOOST_ROOT)
-
-  
-    set(Boost_ROOT "${CHAT_BOOST_ROOT}" CACHE PATH "Boost install prefix" FORCE)
-    list(APPEND CMAKE_PREFIX_PATH "${CHAT_BOOST_ROOT}")
-  elseif(DEFINED ENV{BOOST_ROOT})
-    cmake_path(SET _CHAT_ENV_BOOST "$ENV{BOOST_ROOT}")
-    cmake_path(NORMAL_PATH _CHAT_ENV_BOOST)
-    if(EXISTS "${_CHAT_ENV_BOOST}/include/boost/version.hpp" OR EXISTS "${_CHAT_ENV_BOOST}/boost/version.hpp")
-      set(Boost_ROOT "${_CHAT_ENV_BOOST}" CACHE PATH "Boost (BOOST_ROOT environment variable)" FORCE)
-      list(APPEND CMAKE_PREFIX_PATH "${_CHAT_ENV_BOOST}")
-    endif()
-  else()
-    # MSYS2: one prefix for headers + libs (pacman: mingw-w64-x86_64-boost).
-    set(_CHAT_MSVC_SYS_LIBS FALSE)
-    file(GLOB _CHAT_MSYS_BSYS
-      "${_CHAT_MSYS2_MINGW64}/lib/libboost_system*.dll.a"
-      "${_CHAT_MSYS2_MINGW64}/lib/libboost_system*.a")
-    list(LENGTH _CHAT_MSYS_BSYS _CHAT_MSYS_BSYS_N)
-    if(EXISTS "${_CHAT_MSYS2_MINGW64}/include/boost/version.hpp")
-      set(Boost_ROOT "${_CHAT_MSYS2_MINGW64}" CACHE PATH "Boost (MSYS2 mingw64)" FORCE)
-      set(_CHAT_MSVC_SYS_LIBS TRUE)
-    elseif(_CHAT_MSYS_BSYS_N GREATER 0)
-      message(FATAL_ERROR
-        "Found Boost libraries under ${_CHAT_MSYS2_MINGW64}/lib but no include/boost headers.\n"
-        "Install the dev package (headers):  pacman -S mingw-w64-x86_64-boost\n"
-        "Or your MSYS2 prefix may differ from C:/msys64/mingw64 — set -DCHAT_BOOST_ROOT= to the correct prefix.")
-    endif()
-    if(NOT _CHAT_MSVC_SYS_LIBS)
-      if(EXISTS "${_CHAT_LEGACY_BOOST}/boost/version.hpp" OR EXISTS "${_CHAT_LEGACY_BOOST}/include/boost/version.hpp")
-        file(GLOB _CHAT_LEG_BSYS
-          "${_CHAT_LEGACY_BOOST}/stage/lib/libboost_system*.dll.a"
-          "${_CHAT_LEGACY_BOOST}/stage/lib/libboost_system*.a"
-          "${_CHAT_LEGACY_BOOST}/lib/libboost_system*.dll.a"
-          "${_CHAT_LEGACY_BOOST}/lib/libboost_system*.a")
-        list(LENGTH _CHAT_LEG_BSYS _CHAT_LEG_BSYS_N)
-        if(_CHAT_LEG_BSYS_N GREATER 0)
-          set(Boost_ROOT "${_CHAT_LEGACY_BOOST}" CACHE PATH "Boost (legacy tree with stage/lib)" FORCE)
-          list(APPEND CMAKE_PREFIX_PATH "${_CHAT_LEGACY_BOOST}")
-        endif()
-      endif()
-    endif()
-  endif()
-endif()
-
-# ---- Find dependencies FIRST ----
-if(WIN32)
-  set(_CHAT_LEGACY_CHECK "C:/Users/User/librariesboost/boost_1_89_0")
-  set(_CHAT_MSYS2_ROOT "C:/msys64/mingw64")
-  set(_CHAT_HAVE_HEADERS FALSE)
-  if(CHAT_BOOST_ROOT AND (
-      EXISTS "${CHAT_BOOST_ROOT}/include/boost/version.hpp" OR
-      EXISTS "${CHAT_BOOST_ROOT}/boost/version.hpp"))
-    set(_CHAT_HAVE_HEADERS TRUE)
-  elseif(DEFINED ENV{BOOST_ROOT})
-    cmake_path(SET _CHAT_EBC "$ENV{BOOST_ROOT}")
-    cmake_path(NORMAL_PATH _CHAT_EBC)
-    if(EXISTS "${_CHAT_EBC}/include/boost/version.hpp" OR EXISTS "${_CHAT_EBC}/boost/version.hpp")
-      set(_CHAT_HAVE_HEADERS TRUE)
-    endif()
-  elseif(EXISTS "${_CHAT_LEGACY_CHECK}/boost/version.hpp" OR EXISTS "${_CHAT_LEGACY_CHECK}/include/boost/version.hpp")
-    set(_CHAT_HAVE_HEADERS TRUE)
-  elseif(EXISTS "${_CHAT_MSYS2_ROOT}/include/boost/version.hpp")
-    set(_CHAT_HAVE_HEADERS TRUE)
-  endif()
-  if(NOT _CHAT_HAVE_HEADERS)
-    message(FATAL_ERROR
-      "Could not find Boost headers on Windows.\n"
-      "Install: pacman -S mingw-w64-x86_64-boost  OR set CHAT_BOOST_ROOT / BOOST_ROOT to a Boost prefix.")
-  endif()
-  # When linking Boost libs: need a prefix that contains built system/thread (MSYS2 or b2 stage/lib).
-  if(CHAT_LINK_BOOST_LIBRARIES AND NOT Boost_ROOT)
-    file(GLOB _CHAT_ANY_SYS
-      "${_CHAT_MSYS2_ROOT}/lib/libboost_system*.dll.a"
-      "${_CHAT_MSYS2_ROOT}/lib/libboost_system*.a"
-      "${_CHAT_LEGACY_CHECK}/stage/lib/libboost_system*.dll.a"
-      "${_CHAT_LEGACY_CHECK}/stage/lib/libboost_system*.a")
-    list(LENGTH _CHAT_ANY_SYS _CHAT_ANY_SYS_N)
-    if(_CHAT_ANY_SYS_N EQUAL 0)
-      message(FATAL_ERROR
-        "Boost *libraries* not found (need system + thread for this server).\n"
-        "CMake would only see headers from ${_CHAT_LEGACY_CHECK} without built libs.\n"
-        "Do ONE of:\n"
-        "  1) MSYS2 MinGW64:  pacman -S mingw-w64-x86_64-boost\n"
-        "  2) In your Boost tree:  ./bootstrap.sh && ./b2 --with-system --with-thread\n"
-        "Or configure with -DCHAT_LINK_BOOST_LIBRARIES=OFF (old CMake style; link step may still fail).\n"
-        "Then delete build/ and run cmake again.")
-    endif()
-  endif()
-endif()
-
+# ---- Find dependencies ----
 find_package(PostgreSQL REQUIRED)
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 OLD)
 endif()
 set(Boost_NO_BOOST_CMAKE ON)
-if(CHAT_LINK_BOOST_LIBRARIES)
-  find_package(Boost REQUIRED COMPONENTS system thread)
-else()
-  find_package(Boost REQUIRED)
-  message(WARNING
-    "CHAT_LINK_BOOST_LIBRARIES=OFF: same as your old CMake (headers only). "
-    "Linking may fail: Asio/Beast usually need libboost_system — use b2 stage/, MSYS2 Boost, or turn this ON.")
-endif()
+find_package(Boost REQUIRED)
 
 if(CHAT_ENABLE_PASSWORD_HASH)
-  if(WIN32)
-    # MSYS2: pacman -S mingw-w64-x86_64-libsodium
-    find_path(
-      SODIUM_INCLUDE_DIR sodium.h
-      HINTS
-        "${CMAKE_PREFIX_PATH}"
-        "C:/msys64/mingw64/include"
-    )
-    find_library(
-      SODIUM_LIBRARY
-      NAMES sodium libsodium
-      HINTS
-        "${CMAKE_PREFIX_PATH}"
-        "C:/msys64/mingw64/lib"
-    )
+  # Prefer pkg-config (libsodium.pc). No built-in FindSodium / Config package required.
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(SODIUM QUIET libsodium)
+  endif()
+  if(SODIUM_FOUND)
+    set(SODIUM_INCLUDE_DIR ${SODIUM_INCLUDE_DIRS})
+    set(SODIUM_LIBRARY ${SODIUM_LIBRARIES})
   else()
     find_path(SODIUM_INCLUDE_DIR sodium.h)
-    find_library(SODIUM_LIBRARY sodium)
+    find_library(SODIUM_LIBRARY NAMES sodium libsodium)
   endif()
   if(NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
     message(FATAL_ERROR
       "libsodium not found (needed for CHAT_ENABLE_PASSWORD_HASH). "
-      "Linux: sudo apt install -y libsodium-dev. "
-      "MSYS2 MinGW: pacman -S mingw-w64-x86_64-libsodium. "
+      "Linux: sudo apt install -y libsodium-dev pkg-config. "
+      "MSYS2 MinGW: pacman -S mingw-w64-x86_64-libsodium mingw-w64-x86_64-pkgconf. "
       "Or disable: -DCHAT_ENABLE_PASSWORD_HASH=OFF")
   endif()
 endif()
@@ -184,7 +42,7 @@ endif()
 find_package(OpenSSL REQUIRED)
 
 if(CHAT_ENABLE_JWT)
-  # Linux: never require a system jwt-cpp package (Noble has no libjwt-cpp-dev); fetch header library.
+ # Linux has no package for jwt-cpp so locally fetch to the working tree if there is not found in the working directory
   if(UNIX AND NOT APPLE)
     include(FetchContent)
     message(STATUS "Using FetchContent for jwt-cpp (Linux/BSD)")
@@ -200,7 +58,7 @@ if(CHAT_ENABLE_JWT)
   endif()
 endif()
 
-# ---- nlohmann/json (header-only, in project tree) ----
+# Downloads nLohmann a json library one file only if there is not found in the working directory
 set(JSON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann_json")
 set(JSON_HPP  "${JSON_DIR}/include/nlohmann/json.hpp")
 if(NOT EXISTS "${JSON_HPP}")
@@ -249,19 +107,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 # ---- Link libraries ----
-if(CHAT_LINK_BOOST_LIBRARIES)
-  target_link_libraries(${PROJECT_NAME} PRIVATE
-      Boost::system
-      Boost::thread
-      pqxx
-      PostgreSQL::PostgreSQL
-  )
-else()
   target_link_libraries(${PROJECT_NAME} PRIVATE
       pqxx
       PostgreSQL::PostgreSQL
   )
-endif()
+
 
 if(UNIX AND NOT APPLE)
   target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
