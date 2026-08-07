@@ -9,7 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE SOURCES
     "${PROJECT_SOURCE_DIR}/Src/*.cpp"
 )
-list(FILTER SOURCES EXCLUDE REGEX ".*exmain\\.cpp$")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

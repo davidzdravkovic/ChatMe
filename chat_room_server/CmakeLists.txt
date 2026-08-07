@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(chat_server)
 
-option(CHAT_ENABLE_JWT "Link OpenSSL + jwt-cpp for real HS256 JWT" OFF)
+option(CHAT_ENABLE_JWT "Link OpenSSL + jwt-cpp for real HS256 JWT" ON)
 option(CHAT_ENABLE_PASSWORD_HASH "Hash passwords with libsodium (Argon2id)" ON)
 
 # Compiler needs to use C++17 not silently fail on older version, standard version no extensions

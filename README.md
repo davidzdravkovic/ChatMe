@@ -112,10 +112,35 @@ Exact dependency versions and OS paths vary. Use this as the map; adjust for you
 
 ### Prerequisites
 
-- PostgreSQL  
-- C++17 toolchain + CMake (Boost, libpqxx, OpenSSL; JWT/libsodium as configured)  
-- Node.js 18+ for the client  
-- Media service buildable from `media_storage/`  
+#### API server (`chat_room_server`)
+
+- C++17 toolchain
+- CMake 3.20+
+- Dependencies:
+  - Boost 1.89.0
+  - PostgreSQL 17.5
+  - libpqxx 7.10.1
+  - OpenSSL 3.6.2
+  - libsodium 1.0.20
+  - jwt-cpp 0.7.2 (Windows) / 0.7.1 (Linux/BSD)
+  - nlohmann/json 3.11.3
+
+#### Database
+
+- PostgreSQL 17.5
+
+#### Client
+
+- React + Node.js 18+
+
+#### Media server
+
+- C++17 toolchain
+- CMake 3.20+
+- OpenSSL 3.0.17
+- cpp-httplib (vendored locally in the project tree)
+
+> **Note:** The versions listed above are the versions used and tested with this project. They are recommended for compatibility but are not strict version requirements.
 
 ### Database
 
@@ -123,44 +148,38 @@ Exact dependency versions and OS paths vary. Use this as the map; adjust for you
 2. Apply the PostgreSQL schema (migration tooling / committed schema dump planned — not in this repo yet).  
 3. Point server config / env at that database (`chat_room_server/Config/`, env example in `chat_room_server/deploy/chat-server.env.example`).
 
-### Server
+## Build
 
-```bash
+> `Note`: Before configuring and building, make sure all required dependencies are installed and discoverable by CMake.
+
+### API server
+
+```bash 
+# During CMake configuration: # - Linux/BSD: jwt-cpp is fetched automatically when JWT support is enabled. # - All platforms: nlohmann/json is downloaded into third_party/.
 cd chat_room_server
-# Configure & build with CMake (see CMakePresets.json / deploy notes)
-# Prefer a JWT-enabled build for anything beyond local experiments:
-#   cmake .. -DCHAT_ENABLE_JWT=ON ...
-# Set JWT_SECRET in the environment (see deploy/chat-server.env.example)
-./chat_server   # or your build output name
+cmake -S . -B build
+cmake --build build
+cd build
+.\chat_server
 ```
 
-Default listen target in production is behind nginx → `127.0.0.1:12346`.
 
-### Media service
+### Media server
 
-Build and run `media_storage` on the port nginx expects (production uses `:8081`).
+```bash 
+cd media_storage
+cmake -S . -B build
+cmake --build build
+cd build
+.\media_server
+```
 
 ### Client
 
 ```bash
 cd reactChatRoom
 npm install
-# Dev: set VITE_WS_URL / VITE_MEDIA_BASE for local (e.g. ws://localhost:...)
 npm run dev
-```
-
-Production build:
-
-```bash
-npm run build
-# Serve dist/ via nginx; see reactChatRoom/deploy/
-```
-
-Android:
-
-```bash
-npm run cap:sync
-npm run cap:open
 ```
 
 
