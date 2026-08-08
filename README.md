@@ -93,77 +93,14 @@ Browser / Capacitor
 - `reactChatRoom/` — React + Capacitor client  
 - `media_storage/` — media HTTP service  
 
-### Request path (chat server)
+### Concurrency model (chat server)
 
-The chat server keeps **I/O light on Asio network threads** and runs **business logic + DB on worker threads**.
+- **Network threads** (Boost.Asio `io_context`) only do I/O and a light ingress pipeline: parse, JWT verify, ordering gate.
+- **Worker threads** run business logic and PostgreSQL work, then hand responses back to the `io_context` for writing.
+- Requests are split into a **fast queue** (`LOGIN_REQUEST`, 2 workers) and a **slow queue** (everything else, 7 workers).
+- Send-order between two users is enforced per client for message types, not by luck of thread scheduling.
 
-```mermaid
-flowchart LR
-  subgraph net["Network threads — Boost.Asio io_context"]
-    A[async_read WebSocket] --> B[RequestPipeline]
-    B --> B1[RequestParser]
-    B1 --> B2[WsAuthMiddleware]
-    B2 --> B3[TrafficReadPolicy]
-    B3 --> C[TrafficController.route]
-  end
-
-  C -->|LOGIN_REQUEST| F[SharedContext fast]
-  C -->|most other types| S[SharedContext slow]
-
-  subgraph workers["Dispatcher workers"]
-    F --> WF[2 × fast workers]
-    S --> WS[7 × slow workers]
-    WF --> H[Handler.routeToManager]
-    WS --> H
-    H --> DB[(PostgreSQL)]
-    H --> NA[NetworkAction list]
-  end
-
-  NA --> W[enqueue + async_write]
-  W --> Client[WebSocket client]
-```
-
-**Stages**
-
-1. **Accept / session** — `Network` accepts the WebSocket, assigns a `sessionId`, sends `SESSION_INIT`, starts `readWs` (`Network.cpp`).
-2. **Ingress pipeline** — each frame runs `RequestPipeline::run`: parse JSON → `WsAuthMiddleware` → ordered-read gate → then `TrafficController::route` (`RequestPipeline.cpp`).
-3. **Lanes** — `TrafficPolicy` chooses a queue (`TrafficPolicy.h`):
-   - **Fast:** `LOGIN_REQUEST` (2 worker threads)
-   - **Slow:** everything else (7 worker threads), including `MESSAGE_REQUEST` / `FIRST_MESSAGE_REQUEST`
-4. **Dispatch** — workers `pop` FIFO from `SharedContext`, call `Handler::routeToManager`, then schedule `NetworkAction`s back onto the `io_context` for `async_write` (`Dispatcher.cpp`).
-5. **Writes** — one in-flight write per client; payloads queue until the previous `async_write` finishes (`writeWs`).
-
-### JWT on the path
-
-| Step | Where | What |
-|------|--------|------|
-| Anonymous | `LOGIN_REQUEST` / `CREATE_REQUEST` | No token; `WsAuthMiddleware` lets them through |
-| Issue | `Handler` after successful login/create/auth | `Auth::issueJWT` → `JWT_SECRET` (`getenv`) |
-| Verify | Every other request on ingress | `WsAuthMiddleware` → `Auth::verify` before the request is queued |
-| Media | Signed URL tokens | Same `JWT_SECRET` on `chat_server` and `media_server` |
-
-`sessionId` must match the connection; mismatch closes the session with `SESSION_MISMATCH`.
-
-### Ordering (send path)
-
-TCP and a **single outstanding `async_read` per client** preserve request order into the shared queues. Worker **completion** order is not guaranteed across threads.
-
-For types marked `requires_ordering` (`MESSAGE_REQUEST`, `FIRST_MESSAGE_REQUEST`), `TrafficReadPolicy` + a per-client ordered gate ensure the next ordered request for that client is not dispatched until the previous one’s response path releases the gate (`RELEASE_ORDERED_GATE`). Unordered types (e.g. typing) can still progress without waiting on a slow insert.
-
-Deep dive: [Ordering Messages in a Concurrent C++ WebSocket Server](https://davidzdravkovic.github.io/posts/message-ordering.html).
-
----
-
-## Protocol (high level)
-
-Client and server talk **JSON over one WebSocket**. Typical flow:
-
-1. Connect → server sends `SESSION_INIT` with `sessionId` 
-2. `LOGIN_REQUEST` / `CREATE_REQUEST` (no token) → JWT on success  
-3. Later messages include session id + JWT  
-4. Live traffic examples: `MESSAGE_REQUEST`, `FETCH_MESSAGES_REQUEST`, `TYPING_REQUEST`, `SEEN_REQUEST`, `REACTION_REQUEST`, media upload/finalize requests  
-
-Shared enums: `chat_room_server/common/RequestType.h`, `ResponseType.h`
+**Full request path, JWT flow, ordering rules, and protocol:** [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
