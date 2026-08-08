@@ -144,9 +144,27 @@ Exact dependency versions and OS paths vary. Use this as the map; adjust for you
 
 ### Database
 
-1. Create a database/user.  
-2. Apply the PostgreSQL schema (migration tooling / committed schema dump planned — not in this repo yet).  
-3. Point server config / env at that database (`chat_room_server/Config/`, env example in `chat_room_server/deploy/chat-server.env.example`).
+This project does not use a migration runner. New developers apply the committed baseline schema once to an empty database.
+
+**Schema source of truth:** `chat_room_server/db/schema.sql`  
+**Connection config:** `chat_room_server/Config/DataBase.json` (defaults below)
+
+#### Bootstrap (empty database)
+
+```bash
+# 1. Create role + database (psql as a superuser, e.g. postgres)
+psql -U postgres -c "CREATE USER db_user WITH PASSWORD 'db_password';"
+psql -U postgres -c "CREATE DATABASE chatroom_db OWNER db_user;"
+
+# 2. Apply schema
+psql -U db_user -d chatroom_db -f chat_room_server/db/schema.sql
+```
+
+If the role or database already exists, skip step 1 and only run the `psql -f` command.
+
+Point the server at that database via `chat_room_server/Config/DataBase.json` (production secrets: `chat_room_server/deploy/chat-server.env.example`).
+
+> **Note:** Re-run `schema.sql` only on an empty database. For an existing DB with data, apply targeted `ALTER` SQL manually.
 
 ## Build
 
