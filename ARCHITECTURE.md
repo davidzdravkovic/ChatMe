@@ -10,69 +10,75 @@ The chat server keeps **I/O light on Asio network threads** and runs **business 
 %%{init: {
   "theme": "base",
   "themeVariables": {
-    "fontSize": "14px",
-    "lineColor": "#94a3b8",
-    "clusterBkg": "#f8fafc",
+    "fontSize": "15px",
+    "lineColor": "#cbd5e1",
+    "clusterBkg": "#ffffff",
     "clusterBorder": "#e2e8f0",
     "edgeLabelBackground": "#ffffff"
   },
-  "flowchart": { "curve": "basis", "nodeSpacing": 45, "rankSpacing": 55, "padding": 14 }
+  "flowchart": {
+    "curve": "basis",
+    "nodeSpacing": 40,
+    "rankSpacing": 52,
+    "padding": 20
+  }
 }}%%
 flowchart TD
-    IN(["WebSocket client · JSON frame"])
+    IN(["Client · inbound JSON"])
 
-    subgraph ING["INGRESS — io_context network threads"]
-        READ["async_read<br/>one outstanding read per client"]
-        PARSE["RequestParser<br/>JSON to RequestStruct"]
-        AUTH["WsAuthMiddleware<br/>session check and JWT verify"]
-        GATE["TrafficReadPolicy<br/>per-client ordering gate"]
+    subgraph ING["Ingress · Asio network threads"]
+        READ["async_read"]
+        PARSE["RequestParser"]
+        AUTH["WsAuthMiddleware"]
+        GATE["TrafficReadPolicy"]
         READ --> PARSE --> AUTH --> GATE
     end
 
-    ROUTE{"TrafficController<br/>lane by RequestType"}
+    ROUTE{{"TrafficController"}}
 
-    subgraph SLOWLANE["SLOW lane"]
+    subgraph FASTLANE["Fast lane · LOGIN"]
         direction LR
-        QS["queue<br/>all other types"] --> WS["7 worker threads"]
+        QF["queue"] --> WF["2 workers"]
     end
 
-    subgraph FASTLANE["FAST lane"]
+    subgraph SLOWLANE["Slow lane · everything else"]
         direction LR
-        QF["queue<br/>LOGIN_REQUEST"] --> WF["2 worker threads"]
+        QS["queue"] --> WS["7 workers"]
     end
 
-    HANDLER["Handler · routeToManager<br/>services and repositories"]
+    HANDLER["Handler · routeToManager"]
     DB[("PostgreSQL")]
-    OUT["async_write<br/>one in-flight write per client"]
-    DONE(["WebSocket client · response"])
+    OUT["async_write"]
+    DONE(["Client · response"])
 
     IN --> READ
     GATE --> ROUTE
-    ROUTE --> QF
-    ROUTE --> QS
+    ROUTE -->|LOGIN| QF
+    ROUTE -->|other| QS
     WF --> HANDLER
     WS --> HANDLER
     HANDLER <--> DB
-    HANDLER --> OUT
-    OUT --> DONE
+    HANDLER --> OUT --> DONE
 
-    classDef client fill:#0f172a,stroke:#0f172a,stroke-width:1px,color:#f8fafc
-    classDef io fill:#e0f2fe,stroke:#0284c7,stroke-width:1.4px,color:#082f49
-    classDef guard fill:#ede9fe,stroke:#7c3aed,stroke-width:1.4px,color:#2e1065
-    classDef fastLane fill:#dcfce7,stroke:#16a34a,stroke-width:1.4px,color:#052e16
-    classDef slowLane fill:#ffe4e6,stroke:#e11d48,stroke-width:1.4px,color:#4c0519
-    classDef logic fill:#f1f5f9,stroke:#475569,stroke-width:1.4px,color:#0f172a
-    classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.4px,color:#451a03
+    classDef endpoint fill:#0f172a,stroke:#0f172a,color:#f8fafc
+    classDef io fill:#f0f9ff,stroke:#38bdf8,stroke-width:1.5px,color:#0c4a6e
+    classDef auth fill:#f5f3ff,stroke:#a78bfa,stroke-width:1.5px,color:#4c1d95
+    classDef route fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95
+    classDef fast fill:#ecfdf5,stroke:#34d399,stroke-width:1.5px,color:#065f46
+    classDef slow fill:#fff1f2,stroke:#fb7185,stroke-width:1.5px,color:#9f1239
+    classDef app fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    classDef db fill:#fffbeb,stroke:#fbbf24,stroke-width:1.5px,color:#78350f
 
-    class IN,DONE client
+    class IN,DONE endpoint
     class READ,PARSE,OUT io
-    class AUTH,GATE,ROUTE guard
-    class QF,WF fastLane
-    class QS,WS slowLane
-    class HANDLER logic
-    class DB store
+    class AUTH,GATE auth
+    class ROUTE route
+    class QF,WF fast
+    class QS,WS slow
+    class HANDLER app
+    class DB db
 
-    linkStyle default stroke:#94a3b8,stroke-width:1.4px
+    linkStyle default stroke:#cbd5e1,stroke-width:1.5px
 ```
 
 **Stages**
