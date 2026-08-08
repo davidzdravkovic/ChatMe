@@ -11,22 +11,22 @@ The chat server keeps **I/O light on Asio network threads** and runs **business 
   "theme": "base",
   "themeVariables": {
     "fontSize": "15px",
-    "lineColor": "#cbd5e1",
-    "clusterBkg": "#ffffff",
-    "clusterBorder": "#e2e8f0",
-    "edgeLabelBackground": "#ffffff"
+    "lineColor": "#94a3b8",
+    "clusterBkg": "#f8fafc",
+    "clusterBorder": "#cbd5e1",
+    "primaryBorderColor": "#cbd5e1"
   },
   "flowchart": {
-    "curve": "basis",
-    "nodeSpacing": 40,
-    "rankSpacing": 52,
-    "padding": 20
+    "curve": "linear",
+    "nodeSpacing": 48,
+    "rankSpacing": 70,
+    "padding": 32
   }
 }}%%
 flowchart TD
     IN(["Client · inbound JSON"])
 
-    subgraph ING["Ingress · Asio network threads"]
+    subgraph ING["Ingress"]
         READ["async_read"]
         PARSE["RequestParser"]
         AUTH["WsAuthMiddleware"]
@@ -36,12 +36,12 @@ flowchart TD
 
     ROUTE{{"TrafficController"}}
 
-    subgraph FASTLANE["Fast lane · LOGIN"]
+    subgraph FASTLANE["Fast — LOGIN"]
         direction LR
         QF["queue"] --> WF["2 workers"]
     end
 
-    subgraph SLOWLANE["Slow lane · everything else"]
+    subgraph SLOWLANE["Slow — other"]
         direction LR
         QS["queue"] --> WS["7 workers"]
     end
@@ -53,8 +53,8 @@ flowchart TD
 
     IN --> READ
     GATE --> ROUTE
-    ROUTE -->|LOGIN| QF
-    ROUTE -->|other| QS
+    ROUTE --> QF
+    ROUTE --> QS
     WF --> HANDLER
     WS --> HANDLER
     HANDLER <--> DB
@@ -78,8 +78,10 @@ flowchart TD
     class HANDLER app
     class DB db
 
-    linkStyle default stroke:#cbd5e1,stroke-width:1.5px
+    linkStyle default stroke:#94a3b8,stroke-width:1.6px
 ```
+
+_Ingress runs on Boost.Asio `io_context` network threads. Lane titles encode LOGIN vs other traffic — edge labels are omitted to keep the layout clean._
 
 **Stages**
 
