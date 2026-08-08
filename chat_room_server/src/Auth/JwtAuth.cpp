@@ -26,7 +26,7 @@ std::string jwtSecret() {
 } // namespace
 
 #ifndef CHAT_ENABLE_JWT
-/** Dev-style `dev:…` tokens when JWT-cpp is not linked: allow if ops set either env (JWT_SECRET is required for config load anyway). */
+/** Dev-style `dev:…` tokens when JWT-cpp is not linked: allow if ops set either env. */
 static bool nonJwtTokenModeEnabled() {
     const char* dev = std::getenv("CHAT_INSECURE_DEV_AUTH");
     if (dev && dev[0] != '\0')

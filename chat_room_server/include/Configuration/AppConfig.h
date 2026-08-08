@@ -16,16 +16,9 @@ struct NetworkConfig {
     int wsPort{};
 };
 
-struct JwtConfig {
-    /** HS256 signing secret from JWT_SECRET environment variable. */
-    std::string secret;
-    int accessTokenTtlSeconds{3600};
-};
-
 struct AppConfig {
     DatabaseConfig database;
     NetworkConfig network;
-    JwtConfig jwt;
 };
 
 #endif

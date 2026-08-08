@@ -1,6 +1,0 @@
-{
-  "jwt": {
-    "accessTokenTtlSeconds": 3600,
-    "secret": "JWT_SECRET"
-  }
-}

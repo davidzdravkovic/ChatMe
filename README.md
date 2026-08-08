@@ -162,9 +162,20 @@ psql -U db_user -d chatroom_db -f chat_room_server/db/schema.sql
 
 If the role or database already exists, skip step 1 and only run the `psql -f` command.
 
-Point the server at that database via `chat_room_server/Config/DataBase.json` (production secrets: `chat_room_server/deploy/chat-server.env.example`).
+The server reads DB **host / port / name** from `Config/DataBase.json`
+and DB **username / password** from environment variables `db_user` and
+`db_password`. Those must match the PostgreSQL role created above.
 
-> **Note:** Re-run `schema.sql` only on an empty database. For an existing DB with data, apply targeted `ALTER` SQL manually.
+
+#### Auth environment
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `JWT_SECRET` | Yes (for real JWT builds) | Shared secret for HS256 login/media tokens (`getenv`) |
+| `db_user` / `db_password` | Yes | PostgreSQL role credentials |
+| `CHAT_INSECURE_DEV_AUTH` | No | Only when built **without** `CHAT_ENABLE_JWT`: allows `dev:…` tokens without real JWT |
+
+With presets that set `CHAT_ENABLE_JWT=ON` (e.g. `msys2-mingw64-local`), set `JWT_SECRET` and ignore `CHAT_INSECURE_DEV_AUTH` — that flag is not compiled into JWT builds.
 
 ## Build
 

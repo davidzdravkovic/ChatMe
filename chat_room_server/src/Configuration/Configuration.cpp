@@ -35,6 +35,5 @@ AppConfig Configuration :: loadConfig () {
   DeserializeConfig d;  
   config.database = d.loadDataBase(configDir / "DataBase.json");
   config.network = d.loadNetwork(configDir / "Network.json");
-  config.jwt = d.loadJwt(configDir / "Jwt.json");
   return config;
 }

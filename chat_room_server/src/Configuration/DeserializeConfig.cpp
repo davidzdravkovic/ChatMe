@@ -58,14 +58,3 @@ NetworkConfig DeserializeConfig::loadNetwork(const std::filesystem::path& dir) {
 
     return netConfig;
 }
-
-JwtConfig DeserializeConfig::loadJwt(const std::filesystem::path& dir) {
-    auto j = nlohmann::json::parse(readWholeFile(dir));
-    const auto& jwt = objectOrNested(j, "jwt");
-    JwtConfig jwtConfig;
-
-    jwtConfig.accessTokenTtlSeconds = jwt.value("accessTokenTtlSeconds", 3600);
-    jwtConfig.secret = getEnv("JWT_SECRET");
-
-    return jwtConfig;
-}

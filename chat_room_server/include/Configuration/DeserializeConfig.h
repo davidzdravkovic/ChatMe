@@ -11,7 +11,6 @@ class DeserializeConfig {
 public:
     NetworkConfig loadNetwork(const std::filesystem::path& dir);
     DatabaseConfig loadDataBase(const std::filesystem::path& dir);
-    JwtConfig loadJwt(const std::filesystem::path& dir);
 };
 
 #endif
