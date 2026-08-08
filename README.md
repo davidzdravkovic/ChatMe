@@ -177,6 +177,9 @@ and DB **username / password** from environment variables `db_user` and
 
 With presets that set `CHAT_ENABLE_JWT=ON` (e.g. `msys2-mingw64-local`), set `JWT_SECRET` and ignore `CHAT_INSECURE_DEV_AUTH` — that flag is not compiled into JWT builds.
 
+`chat_server` and `media_server` both read `JWT_SECRET` from the environment
+and must use the **same** value.
+
 ## Build
 
 > `Note`: Before configuring and building, make sure all required dependencies are installed and discoverable by CMake.
