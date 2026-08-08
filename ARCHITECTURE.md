@@ -10,73 +10,69 @@ The chat server keeps **I/O light on Asio network threads** and runs **business 
 %%{init: {
   "theme": "base",
   "themeVariables": {
-    "fontFamily": "ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif",
-    "fontSize": "13px",
+    "fontSize": "14px",
     "lineColor": "#94a3b8",
-    "clusterBkg": "#fbfdff",
-    "clusterBorder": "#cbd5e1",
+    "clusterBkg": "#f8fafc",
+    "clusterBorder": "#e2e8f0",
     "edgeLabelBackground": "#ffffff"
   },
-  "flowchart": { "curve": "basis", "nodeSpacing": 45, "rankSpacing": 70, "padding": 14 }
+  "flowchart": { "curve": "basis", "nodeSpacing": 45, "rankSpacing": 55, "padding": 14 }
 }}%%
-flowchart LR
-    CLIENT(["🌐 &nbsp;WebSocket client"])
+flowchart TD
+    IN(["WebSocket client · JSON frame"])
 
-    subgraph NET["⚡ &nbsp;Network threads · Boost.Asio io_context"]
-        direction TB
-        READ["async_read<br/>one per client"]
-        PARSE["RequestParser<br/>JSON → RequestStruct"]
-        AUTH["WsAuthMiddleware<br/>JWT verify"]
-        GATE["TrafficReadPolicy<br/>ordered-read gate"]
-        ROUTE{{"TrafficController<br/>route"}}
-        READ --> PARSE --> AUTH --> GATE --> ROUTE
+    subgraph ING["INGRESS — io_context network threads"]
+        READ["async_read<br/>one outstanding read per client"]
+        PARSE["RequestParser<br/>JSON to RequestStruct"]
+        AUTH["WsAuthMiddleware<br/>session check and JWT verify"]
+        GATE["TrafficReadPolicy<br/>per-client ordering gate"]
+        READ --> PARSE --> AUTH --> GATE
     end
 
-    subgraph QUEUES["🚦 &nbsp;SharedContext queues"]
-        direction TB
-        FAST[["FAST · LOGIN_REQUEST"]]
-        SLOW[["SLOW · everything else"]]
+    ROUTE{"TrafficController<br/>lane by RequestType"}
+
+    subgraph SLOWLANE["SLOW lane"]
+        direction LR
+        QS["queue<br/>all other types"] --> WS["7 worker threads"]
     end
 
-    subgraph WORKERS["🧵 &nbsp;Dispatcher workers"]
-        direction TB
-        WF["2 × fast"]
-        WS["7 × slow"]
-        HANDLER["Handler<br/>routeToManager"]
-        WF --> HANDLER
-        WS --> HANDLER
+    subgraph FASTLANE["FAST lane"]
+        direction LR
+        QF["queue<br/>LOGIN_REQUEST"] --> WF["2 worker threads"]
     end
 
-    DB[("🗄 &nbsp;PostgreSQL")]
-    ACTIONS["NetworkAction batch"]
-    WRITE["async_write<br/>one in-flight per client"]
+    HANDLER["Handler · routeToManager<br/>services and repositories"]
+    DB[("PostgreSQL")]
+    OUT["async_write<br/>one in-flight write per client"]
+    DONE(["WebSocket client · response"])
 
-    CLIENT ==> READ
-    ROUTE -- "fast" --> FAST
-    ROUTE -- "slow" --> SLOW
-    FAST --> WF
-    SLOW --> WS
+    IN --> READ
+    GATE --> ROUTE
+    ROUTE --> QF
+    ROUTE --> QS
+    WF --> HANDLER
+    WS --> HANDLER
     HANDLER <--> DB
-    HANDLER --> ACTIONS --> WRITE
-    WRITE ==> CLIENT
+    HANDLER --> OUT
+    OUT --> DONE
 
-    classDef ingress fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px,color:#082f49,rx:8,ry:8
-    classDef guard fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#2e1065,rx:8,ry:8
-    classDef fastLane fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#052e16
-    classDef slowLane fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#4c0519
-    classDef worker fill:#f1f5f9,stroke:#64748b,stroke-width:1.5px,color:#0f172a,rx:8,ry:8
-    classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#451a03
-    classDef egress fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a,rx:10,ry:10
+    classDef client fill:#0f172a,stroke:#0f172a,stroke-width:1px,color:#f8fafc
+    classDef io fill:#e0f2fe,stroke:#0284c7,stroke-width:1.4px,color:#082f49
+    classDef guard fill:#ede9fe,stroke:#7c3aed,stroke-width:1.4px,color:#2e1065
+    classDef fastLane fill:#dcfce7,stroke:#16a34a,stroke-width:1.4px,color:#052e16
+    classDef slowLane fill:#ffe4e6,stroke:#e11d48,stroke-width:1.4px,color:#4c0519
+    classDef logic fill:#f1f5f9,stroke:#475569,stroke-width:1.4px,color:#0f172a
+    classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.4px,color:#451a03
 
-    class READ,PARSE ingress
+    class IN,DONE client
+    class READ,PARSE,OUT io
     class AUTH,GATE,ROUTE guard
-    class FAST fastLane
-    class SLOW slowLane
-    class WF,WS,HANDLER worker
+    class QF,WF fastLane
+    class QS,WS slowLane
+    class HANDLER logic
     class DB store
-    class CLIENT,ACTIONS,WRITE egress
 
-    linkStyle default stroke:#94a3b8,stroke-width:1.5px
+    linkStyle default stroke:#94a3b8,stroke-width:1.4px
 ```
 
 **Stages**
